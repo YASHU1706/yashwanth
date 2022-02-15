@@ -1,0 +1,179 @@
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Scanner;
+
+class Coordinate {
+    double x;
+    double y;
+
+    public Coordinate(double x, double y) {
+        this.x = x;
+        this.y = y;
+    }
+
+    public String toString() {
+        return " (" + x + ", " + y + ") ";
+    }
+}
+
+
+public class Main {
+    public static void main(String[] args) {
+        System.out.println("Start");
+
+        // define the list of coordinates, it should be linkedList because we should know the order of the elemenets
+        List<Coordinate> coordinateList = new LinkedList<>();
+
+        // define the list of obstacle coordinates
+        List<Coordinate> obstaclesList = new LinkedList<>();
+
+
+        System.out.println("Please enter total number of coordinates"); // prompt for number of coordinates
+        int numberOfCoordinates = getInteger(); // get the total number of coordinates
+
+        System.out.println("Please enter total number of obstacles"); // prompt for number of obstacle coordinates
+        int numberOfObstacles = getInteger(); // get the total number of obstacle coordinates
+
+        // if there are coordinates, please get the coordinates in order one by one
+        if (numberOfCoordinates > 0) {
+            for (int currentCoordinate = 1; currentCoordinate <= numberOfCoordinates; currentCoordinate++) {
+                System.out.println("Please enter co-ordinate " + currentCoordinate + " eg 1,2");
+                coordinateList.add(getCoordinate());
+            }
+        } else {
+            System.out.println("No coordinates provided, exiting");
+            System.exit(0);
+        }
+
+        // if there are obstacle coordinates, please get the coordinates in order one by one
+        if (numberOfObstacles > 0) {
+            for (int currentCoordinate = 1; currentCoordinate <= numberOfObstacles; currentCoordinate++) {
+                System.out.println("Please enter obstacle co-ordinate " + currentCoordinate + " eg 1,2");
+                obstaclesList.add(getCoordinate());
+            }
+        } else {
+            System.out.println("No obstacle coordinates provided");
+        }
+
+        // print all values once
+        System.out.println("total number of coordinates are : " + numberOfCoordinates);
+        System.out.println("total number of obstacle coordinates are : " + numberOfObstacles);
+        System.out.println("List of path coordinates " + coordinateList);
+        System.out.println("List of obstacle coordinates " + obstaclesList);
+
+        // run the main logic
+        smooth(coordinateList, obstaclesList);
+
+        System.out.println(" - - - - - - - - - - ");
+        // print the final list
+        System.out.println("Final List " + coordinateList);
+    }
+
+    public static List<Coordinate> smooth(List<Coordinate> coordinateList, List<Coordinate> obstaclesList) {
+        // logic
+        // iteration 1 : 1, 2, 3
+        // iteration 2 : 3, 4, 5
+        // iteration 3 : 5, 6, 7
+        // iteration 4 : 7, 8, 9
+        // this is the logic that means logic for iteration x, it should have the range between 2x-1, 2x, 2x+1
+        // so if we want to run an iteration it should have atleast of 2x+1 size
+        // lets initialize loop with iteration & increment it by 1 & check for the condition with 2x+1
+
+        for (int iteration = 1; (2 * iteration + 1) <= coordinateList.size(); iteration++) {
+
+            // first value
+            int lowerLimit = 2 * iteration - 1;
+
+            System.out.println(" - - - - - - - - - - ");
+
+            // -1 because values starts from 0 & we are using iteration variable with 1, so -1
+            Coordinate first = coordinateList.get(lowerLimit - 1);  // first
+            Coordinate second = coordinateList.get(lowerLimit - 1 + 1); // second
+            Coordinate third = coordinateList.get(lowerLimit - 1 + 2); // third
+
+            // main formula for smoothed coordinate is ( first.x + third.x / 2, first.y + third.y / 2 )
+            Coordinate smoothedCoordinate = new Coordinate((first.x + third.x) / 2, (first.y + third.y) / 2);
+
+            // print them
+            System.out.println("Iteration  " + iteration + ", Smoothing between points " + first + second + third + " new coordinate is " + smoothedCoordinate);
+
+            // main logic, check if obstacle exists..
+            if (listContains(obstaclesList, smoothedCoordinate)) {
+                System.out.println("obstacle exists here, so skip");
+            } else {
+                System.out.println("replacing " + second + " with smoothed coordinate " + smoothedCoordinate);
+                // replace second with the smoothedCoordinate
+                coordinateList.set(lowerLimit - 1 + 1, smoothedCoordinate);
+                System.out.println("Current list is " + coordinateList);
+            }
+        }
+        // return final list
+        return coordinateList;
+    }
+
+    // to check whether obstacle is present at that place.
+    public static boolean listContains(List<Coordinate> coordinateList, Coordinate smoothedCoordinate) {
+        // iterate over each coordinate in the list & check whether the current x, y values matches with give coordinate
+        for (Coordinate coordinate : coordinateList) {
+            if (Double.compare(coordinate.x, smoothedCoordinate.x) == 0 && Double.compare(coordinate.y, smoothedCoordinate.y) == 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // scan proper double
+    public static int getInteger() {
+        // prepare scanner object
+        Scanner scannerObj = new Scanner(System.in);
+        // get user input whatever entered
+        String inputValue = scannerObj.nextLine();
+        // check whether value entered is not empty excluding spaces
+        if (inputValue != null && !inputValue.isEmpty() && !inputValue.trim().isEmpty()) {
+            try {
+                // if yes, convert to integer
+                return Integer.parseInt(inputValue.trim());
+            } catch (Exception e) {
+                System.out.println("Exception - " + e.getMessage());
+                System.out.println("Invalid Input " + inputValue + ", please enter a valid value eg: 1, 4, 6");
+            }
+        }
+        // if not, ask for user input again in recursive mode.
+        System.out.println("Empty value, Please enter valid value eg: 1, 4, 6");
+        return getInteger();
+    }
+
+    // scan proper coordinate
+    public static Coordinate getCoordinate() {
+        // prepare scanner object
+        Scanner scannerObj = new Scanner(System.in);
+        // get user input whatever entered
+        String inputValue = scannerObj.nextLine();
+        // check whether value entered is not empty excluding spaces & should have ,
+        if (inputValue != null && !inputValue.isEmpty() && !inputValue.trim().isEmpty() && inputValue.contains(",")) {
+            // split the values by ,
+            String[] coordinateValues = inputValue.trim().split(",");
+            // check whether we got 2 values x,y
+            if (coordinateValues.length == 2) {
+                String xCoordinateInput = coordinateValues[0]; // first value is X
+                String yCoordinateInput = coordinateValues[1]; // second value is Y
+                // check whether they're correct & convert them to double
+                if (xCoordinateInput != null && !xCoordinateInput.isEmpty() && !xCoordinateInput.trim().isEmpty() &&
+                        yCoordinateInput != null && !yCoordinateInput.isEmpty() && !yCoordinateInput.trim().isEmpty()) {
+                    try {
+                        double xCoordinate = Double.parseDouble(xCoordinateInput.trim());
+                        double yCoordinate = Double.parseDouble(yCoordinateInput.trim());
+
+                        // prepare coordinate object
+                        return new Coordinate(xCoordinate, yCoordinate);
+                    } catch (Exception e) {
+                        System.out.println("Invalid input x - " + xCoordinateInput + ", y - " + yCoordinateInput);
+                    }
+                }
+            }
+        }
+        // if not, ask for user input again in recursive mode.
+        System.out.println("Empty / Invalid co-ordinate " + inputValue + ", Please enter valid value eg: 1,2");
+        return getCoordinate();
+    }
+}
